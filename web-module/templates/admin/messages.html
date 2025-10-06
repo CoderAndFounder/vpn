@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Сообщения бота{% endblock %}
+{% block title_header %}Сообщения бота{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="text-lg font-semibold">Управление сообщениями</h6>
+       <!-- <button class="btn btn-primary" id="addMessageBtn">
+            <i class="bi bi-plus-lg me-2"></i> Добавить сообщение
+        </button>
+        -->
+    </div>
+    <div class="dataTables_wrapper">
+        <table id="messagesTable" class="table table-hover align-middle dataTable">
+            <thead>
+                <tr>
+                    <th>Команда</th>
+                    <th>Текст</th>
+                    <th>Изображение</th>
+                    <th>Статус</th>
+                    <th style="width: 150px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for message in messages %}
+                <tr>
+                    <td class="text-sm">{{ message.command }}</td>
+                    <td class="text-sm">{{ message.text[:50] }}{% if message.text|length > 50 %}...{% endif %}</td>
+                    <td class="text-sm">
+                        {% if message.image_path %}
+                        <i class="bi bi-image text-success"></i>
+                        {% else %}
+                        <i class="bi bi-dash"></i>
+                        {% endif %}
+                    </td>
+                    <td class="text-sm">
+                        {% if message.is_enable %}
+                        <span class="text-sm">Активно</span>
+                        {% else %}
+                        <span class="text-sm" style="color: rgb(235, 137, 137);">Неактивно</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm edit-btn" style="color: white;" data-command="{{ message.command }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm delete-btn" style="color: white;" data-command="{{ message.command }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="messageModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Редактирование сообщения</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="messageForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Команда</label>
+                        <input type="text" class="form-control" name="command" required>
+                        <div class="form-text">Например: /start, /help</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Текст сообщения</label>
+                        <textarea class="form-control" name="text" rows="5" required></textarea>
+                        <div class="form-text">Поддерживается Markdown разметка</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Путь к изображению</label>
+                        <input type="text" class="form-control" name="image_path">
+                        <div class="form-text">Относительный путь к файлу изображения (необязательно)</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_enable">
+                            <label class="form-check-label">Активно</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveMessageBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить это сообщение?</p>
+                <p class="mb-0"><strong>Команда:</strong> <span id="deleteCommand"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Инициализация DataTables
+    const messagesTable = $('#messagesTable').DataTable({
+        language: {
+            "processing": "Подождите...",
+            "search": "Поиск:",
+            "lengthMenu": "_MENU_ записей",
+            "info": "Записи с _START_ до _END_ из _TOTAL_",
+            "infoEmpty": "Записи с 0 до 0 из 0 записей",
+            "infoFiltered": "(отфильтровано из _MAX_ записей)",
+            "loadingRecords": "Загрузка записей...",
+            "zeroRecords": "Записи отсутствуют.",
+            "emptyTable": "В таблице отсутствуют данные",
+            "paginate": {
+                "first": "«",
+                "previous": "‹",
+                "next": "›",
+                "last": "»"
+            }
+        },
+        order: [[0, 'asc']],
+        pageLength: 10,
+        responsive: true,
+        autoWidth: false,
+        columnDefs: [
+            { orderable: false, targets: [2, 4] }
+        ]
+    });
+
+    // Инициализация модальных окон
+    const messageModal = new bootstrap.Modal(document.getElementById('messageModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let currentCommand = null;
+    let isCreating = false;
+
+    // Обработчик добавления сообщения
+    $('#addMessageBtn').click(function() {
+        isCreating = true;
+        currentCommand = null;
+        $('#modalTitle').text('Добавление сообщения');
+        $('#messageForm').trigger('reset').removeClass('was-validated');
+        $('#messageForm [name="command"]').prop('readonly', false);
+        messageModal.show();
+    });
+
+    // Обработчик редактирования сообщения
+    $(document).on('click', '.edit-btn', async function(e) {
+        e.preventDefault();
+        isCreating = false;
+        currentCommand = $(this).data('command');
+        $('#modalTitle').text('Редактирование сообщения');
+        $('#messageForm').removeClass('was-validated');
+        $('#messageForm [name="command"]').prop('readonly', true);
+        
+        try {
+            const response = await fetch(`/admin/messages/edit/${currentCommand}`);
+            if (!response.ok) throw new Error('Ошибка при получении данных');
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            const form = $('#messageForm')[0];
+            form.command.value = data.command;
+            form.text.value = data.text;
+            form.image_path.value = data.image_path || '';
+            form.is_enable.checked = data.is_enable;
+            
+            messageModal.show();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при получении данных: ' + error.message);
+        }
+    });
+
+    // Обработчик удаления сообщения
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        currentCommand = $(this).data('command');
+        $('#deleteCommand').text(currentCommand);
+        deleteModal.show();
+    });
+
+    // Подтверждение удаления
+    $('#confirmDeleteBtn').click(async function() {
+        try {
+            const response = await fetch(`/admin/messages/delete/${currentCommand}`, {
+                method: 'POST'
+            });
+            if (!response.ok) throw new Error('Ошибка при удалении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            deleteModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при удалении: ' + error.message);
+        }
+    });
+
+    // Сохранение сообщения
+    $('#saveMessageBtn').click(async function() {
+        const form = document.getElementById('messageForm');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const formData = {
+            command: form.command.value,
+            text: form.text.value,
+            image_path: form.image_path.value || null,
+            is_enable: form.is_enable.checked
+        };
+
+        try {
+            const url = isCreating ? '/admin/messages/create' 
+                                 : `/admin/messages/edit/${currentCommand}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error('Ошибка при сохранении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            messageModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при сохранении: ' + error.message);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,470 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи{% endblock %}
+{% block title_header %}Пользователи{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h6 class="mb-4 text-lg font-semibold">Управление пользователями (Всего: {{ total_users }})</h6>
+    
+    <!-- Форма поиска -->
+    <div class="mb-4">
+        <form method="GET" class="d-flex gap-2">
+            <input type="text" 
+                   name="search" 
+                   class="form-control" 
+                   placeholder="Поиск по имени, telegram ID или реф. коду" 
+                   value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-search"></i>
+            </button>
+            {% if search %}
+            <a href="?" class="btn btn-secondary">
+                <i class="bi bi-x-lg"></i>
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div class="dataTables_wrapper">
+        <table id="usersTable" class="table table-hover align-middle dataTable">
+            <thead>
+                <tr>
+                    <th class="text-sm" style="width: 60px;">ID</th>
+                    <th class="text-sm" style="width: 200px;">Имя</th>
+                    <th class="text-sm" style="width: 150px;">Регистрация</th>
+                    <th class="text-sm" style="width: 120px;">Реф. код</th>
+                    <th class="text-sm" style="width: 100px;">Рефералов</th>
+                    <th class="text-sm" style="width: 120px;">Приглашён</th>
+                    <th class="text-sm" style="width: 100px;">Пробный</th>
+                    <th class="text-sm" style="width: 100px;">Статус</th>
+                    <th style="width: 100px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="user-row" data-id="{{ user.id }}" style="cursor: pointer;">
+                    <td class="text-sm">{{ user.id }}</td>
+                    <td class="text-sm">{{ user.username or '-' }}</td>
+                    <td class="text-sm">{{ user.date }}</td>
+                    <td class="text-sm">{{ user.referral_code or '-' }}</td>
+                    <td class="text-sm">{{ user.referral_count }}</td>
+                    <td class="text-sm">{{ user.referred_by or '-' }}</td>
+                    <td>
+                        {% if user.trial_period %}
+                        <span class="text-sm" style="color: rgb(235, 137, 137);">Использован</span>
+                        {% else %}
+                        <span class="text-sm" style="color: rgb(167, 235, 167);">Не использован</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_enable %}
+                        <span class="text-sm">Активен</span>
+                        {% else %}
+                        <span class="text-sm" style="color: rgb(235, 137, 137);">Заблокирован</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm edit-btn" style="color: white;" data-id="{{ user.id }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm delete-btn" style="color: white;" data-id="{{ user.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Пагинация -->
+        <div class="d-flex justify-content-center mt-4">
+            <nav>
+                <ul class="pagination">
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">«</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}">‹</a>
+                    </li>
+                    {% endif %}
+
+                    {# Вычисляем диапазон страниц для отображения #}
+                    {% set start_page = [1, current_page - 2]|max %}
+                    {% set end_page = [total_pages, current_page + 2]|min %}
+
+                    {% for p in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if p == current_page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ p }}{% if search %}&search={{ search }}{% endif %}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if current_page < total_pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}">›</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ total_pages }}{% if search %}&search={{ search }}{% endif %}">»</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно просмотра -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Информация о пользователе</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Основная информация</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted">ID:</td>
+                                <td id="viewUserId"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Имя:</td>
+                                <td id="viewUserName"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Telegram ID:</td>
+                                <td id="viewUserTelegramId"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Регистрация:</td>
+                                <td id="viewUserDate"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Реферальная система</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td class="text-muted">Реф. код:</td>
+                                <td id="viewUserRefCode"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Рефералов:</td>
+                                <td id="viewUserRefCount"></td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Приглашён:</td>
+                                <td id="viewUserRefBy"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <h6 class="mt-4">История платежей</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="paymentsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Дата</th>
+                                <th>Тариф</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viewUserPayments">
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 class="mt-4">Подписки</h6>
+                <div id="viewUserSubscriptions">
+                    <!-- Подписки будут добавлены через JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно редактирования -->
+<div class="modal fade" id="userModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Редактирование пользователя</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control" name="username">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="trial_period">
+                            <label class="form-check-label">Пробный период использован</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_enable">
+                            <label class="form-check-label">Активен</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveUserBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить этого пользователя?</p>
+                <p class="mb-0"><strong>Пользователь:</strong> <span id="deleteUserName"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Инициализация модальных окон
+    const viewModal = new bootstrap.Modal(document.getElementById('viewModal'));
+    const userModal = new bootstrap.Modal(document.getElementById('userModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let currentUserId = null;
+
+    // Обработчик клика по строке пользователя
+    $(document).on('click', '.user-row', async function(e) {
+        if (!$(e.target).closest('.edit-btn, .delete-btn').length) {
+            const userId = $(this).data('id');
+            try {
+                const response = await fetch(`/admin/users/view/${userId}`);
+                if (!response.ok) throw new Error('Ошибка при получении данных');
+                
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                // Заполняем основную информацию
+                $('#viewUserId').text(data.user.id);
+                $('#viewUserName').text(data.user.username || '-');
+                $('#viewUserTelegramId').text(data.user.telegram_id);
+                $('#viewUserDate').text(data.user.date);
+                $('#viewUserRefCode').text(data.user.referral_code || '-');
+                $('#viewUserRefCount').text(data.user.referral_count);
+                $('#viewUserRefBy').text(data.user.referred_by || '-');
+
+                // Заполняем платежи
+                const paymentsHtml = data.payments.map(payment => `
+                    <tr>
+                        <td>${payment.date}</td>
+                        <td>${payment.tariff_name}</td>
+                        <td>${payment.price} ₽</td>
+                    </tr>
+                `).join('');
+                $('#viewUserPayments').html(paymentsHtml || '<tr><td colspan="3" class="text-center">Нет платежей</td></tr>');
+
+                // Заполняем подписки
+                const subscriptionsHtml = data.subscriptions.map(sub => {
+                    const isExpired = sub.days_left <= 0;
+                    const daysLeft = Math.ceil(sub.days_left);
+                    return `
+                        <div class="mb-2 p-3 border border-gray-700 rounded">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">${sub.tariff_name}</h6>
+                                    <small class="text-muted">
+                                        Сервер: ${sub.server_name || 'Не указан'}<br>
+                                        VLESS: ${sub.vless}<br>
+                                        ${isExpired ? '<span class="text-danger">Просрочен</span>' : 
+                                                    `Осталось дней: ${daysLeft}`}
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <!-- убрать кнопку удаления подписки 
+                                    <button class="btn btn-sm toggle-sub-btn" 
+                                            data-id="${sub.id}" 
+                                            data-active="${sub.is_active}">
+                                        <i class="bi ${sub.is_active ? 'bi-check-circle text-success' : 'bi-dash-circle text-warning'}"></i>
+                                    </button>
+                                    <button class="btn btn-sm delete-sub-btn text-danger" data-id="${sub.id}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                -->
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                $('#viewUserSubscriptions').html(subscriptionsHtml || '<p class="text-center">Нет подписок</p>');
+                
+                viewModal.show();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка при получении данных: ' + error.message);
+            }
+        }
+    });
+
+    // Обработчик включения/выключения подписки
+    $(document).on('click', '.toggle-sub-btn', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const subId = $(this).data('id');
+        try {
+            const response = await fetch(`/admin/users/subscription/${subId}/toggle`, {
+                method: 'POST'
+            });
+            if (!response.ok) throw new Error('Ошибка при изменении статуса');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            // Обновляем внешний вид кнопки
+            $(this).data('active', result.is_active);
+            $(this).toggleClass('btn-success btn-warning');
+            $(this).find('i').toggleClass('bi-check-circle bi-dash-circle');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при изменении статуса: ' + error.message);
+        }
+    });
+
+    // Обработчик удаления подписки
+    $(document).on('click', '.delete-sub-btn', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!confirm('Вы действительно хотите удалить эту подписку?')) return;
+        
+        const subId = $(this).data('id');
+        try {
+            const response = await fetch(`/admin/users/subscription/${subId}/delete`, {
+                method: 'POST'
+            });
+            if (!response.ok) throw new Error('Ошибка при удалении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            // Удаляем карточку подписки
+            $(this).closest('.mb-2').remove();
+            if ($('#viewUserSubscriptions .mb-2').length === 0) {
+                $('#viewUserSubscriptions').html('<p class="text-center">Нет подписок</p>');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при удалении: ' + error.message);
+        }
+    });
+
+    // Обработчик редактирования пользователя
+    $(document).on('click', '.edit-btn', async function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        currentUserId = $(this).data('id');
+        
+        try {
+            const response = await fetch(`/admin/users/edit/${currentUserId}`);
+            if (!response.ok) throw new Error('Ошибка при получении данных');
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            const form = $('#userForm')[0];
+            form.username.value = data.username || '';
+            form.trial_period.checked = data.trial_period;
+            form.is_enable.checked = data.is_enable;
+            
+            userModal.show();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при получении данных: ' + error.message);
+        }
+    });
+
+    // Обработчик удаления пользователя
+    $(document).on('click', '.delete-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        currentUserId = $(this).data('id');
+        const userName = $(this).closest('tr').find('td:eq(1)').text();
+        $('#deleteUserName').text(userName);
+        deleteModal.show();
+    });
+
+    // Подтверждение удаления
+    $('#confirmDeleteBtn').click(async function() {
+        try {
+            const response = await fetch(`/admin/users/delete/${currentUserId}`, {
+                method: 'POST'
+            });
+            if (!response.ok) throw new Error('Ошибка при удалении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            deleteModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при удалении: ' + error.message);
+        }
+    });
+
+    // Сохранение пользователя
+    $('#saveUserBtn').click(async function() {
+        const form = document.getElementById('userForm');
+        const formData = {
+            username: form.username.value,
+            trial_period: form.trial_period.checked,
+            is_enable: form.is_enable.checked
+        };
+
+        try {
+            const response = await fetch(`/admin/users/edit/${currentUserId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error('Ошибка при сохранении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            userModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при сохранении: ' + error.message);
+        }
+    });
+});
+</script>
+{% endblock %}

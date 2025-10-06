@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Панель управления{% endblock %}
+{% block title_header %}Панель управления{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-blue-900 rounded-full">
+                <i class="bi bi-people text-2xl text-blue-400"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-400 text-sm">Всего пользователей</h3>
+                <p class="text-2xl font-semibold text-white">{{ total_users }}</p>
+                <small class="text-gray-400">+{{ new_users_week }} за неделю</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-green-900 rounded-full">
+                <i class="bi bi-trophy text-2xl text-green-400"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-400 text-sm">Популярный тариф</h3>
+                <p class="text-sm text-white">{{ popular_tariffs|safe }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+        <div class="flex items-center">
+            <div class="p-3 bg-purple-900 rounded-full">
+                <i class="bi bi-currency-dollar text-2xl text-purple-400"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-400 text-sm">Общий доход</h3>
+                <p class="text-2xl font-semibold text-white">{{ "%.2f"|format(total_earnings) }} ₽</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mb-6">
+    <h6 class="mb-4 text-lg font-semibold">Последние платежи</h6>
+    <div class="dataTables_wrapper">
+        <table class="table table-hover align-middle dataTable">
+            <thead>
+                <tr>
+                    <th style="width: 120px;">ID транзакции</th>
+                    <th style="width: 200px;">Пользователь</th>
+                    <th style="width: 200px;">Тариф</th>
+                    <th style="width: 120px;">Сумма</th>
+                    <th style="width: 150px;">Дата</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in recent_payments %}
+                <tr>
+                    <td>#{{ payment.id }}</td>
+                    <td>{{ payment.username }}</td>
+                    <td>{{ payment.tariff_name }}</td>
+                    <td>{{ "%.2f"|format(payment.price) }} ₽</td>
+                    <td>{{ payment.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

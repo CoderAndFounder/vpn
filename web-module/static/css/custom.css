@@ -1,0 +1,223 @@
+body {
+    background-color: #111827;
+    color: #e5e7eb;
+}
+
+/* Исправление круглых иконок */
+.rounded-full {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+}
+
+/* DataTables Styling */
+.dataTables_wrapper {
+    color: #e5e7eb !important;
+    background-color: #1f2937 !important;
+    padding: 1rem;
+    border-radius: 0.5rem;
+}
+
+table.dataTable {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+table.dataTable thead th {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+    border-color: #4b5563 !important;
+}
+
+table.dataTable tbody td {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+/* Стили для всех таблиц в модальных окнах */
+.modal .table {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+.modal .table thead th {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+    border-color: #4b5563 !important;
+    border-bottom: 2px solid #4b5563 !important;
+}
+
+.modal .table tbody td {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+.modal .table-hover tbody tr:hover {
+    background-color: #374151 !important;
+    color: #ffffff !important;
+}
+
+.modal .table-striped tbody tr:nth-of-type(odd) {
+    background-color: #283548 !important;
+}
+
+/* Стили для подписки */
+.modal .subscription-info {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    border-radius: 0.375rem;
+    padding: 1rem;
+}
+
+.modal .subscription-info .list-group-item {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+.modal .subscription-info .badge {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+}
+
+.dataTables_length,
+.dataTables_filter,
+.dataTables_info,
+.dataTables_processing,
+.dataTables_paginate {
+    color: #e5e7eb !important;
+    margin: 0.5rem 0;
+}
+
+.dataTables_length select,
+.dataTables_filter input {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.dataTables_paginate .paginate_button {
+    background-color: #374151 !important;
+    color: #e5e7eb !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.75rem !important;
+    margin: 0 0.25rem;
+}
+
+.dataTables_paginate .paginate_button.current,
+.dataTables_paginate .paginate_button:hover {
+    background-color: #4b5563 !important;
+    color: #ffffff !important;
+    border-color: #6b7280 !important;
+}
+
+/* Modal Styling */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: #1f2937;
+    color: #e5e7eb;
+    border: 1px solid #374151;
+}
+
+.modal-header {
+    border-bottom: 1px solid #374151;
+    background-color: #1f2937;
+}
+
+.modal-footer {
+    border-top: 1px solid #374151;
+    background-color: #1f2937;
+}
+
+.form-control,
+.form-select {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #374151 !important;
+    border-color: #6b7280 !important;
+    color: #e5e7eb !important;
+    box-shadow: 0 0 0 0.25rem rgba(107, 114, 128, 0.25) !important;
+}
+
+.form-control::placeholder {
+    color: #9ca3af !important;
+}
+
+.input-group-text {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #e5e7eb !important;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.form-check-input {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+.form-check-input:checked {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+.form-check-label {
+    color: #e5e7eb !important;
+}
+
+.invalid-feedback {
+    color: #ef4444 !important;
+}
+
+/* Стили для списков в модальных окнах */
+.modal .list-group-item {
+    background-color: #1f2937 !important;
+    color: #e5e7eb !important;
+    border-color: #374151 !important;
+}
+
+.modal .list-group-item:hover {
+    background-color: #374151 !important;
+}
+
+/* Стили для карточек в модальных окнах */
+.modal .card {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+.modal .card-header {
+    background-color: #374151 !important;
+    border-bottom-color: #4b5563 !important;
+}
+
+.modal .card-footer {
+    background-color: #374151 !important;
+    border-top-color: #4b5563 !important;
+}
+
+/* Исправляем цвет для text-muted в модальных окнах */
+.modal .text-muted {
+    color: #9ca3af !important;
+}
+

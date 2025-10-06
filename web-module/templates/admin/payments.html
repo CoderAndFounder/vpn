@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Платежи{% endblock %}
+{% block title_header %}Платежи{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="text-lg font-semibold">История платежей</h6>
+    </div>
+
+    <div class="dataTables_wrapper">
+        <table id="paymentsTable" class="table table-hover align-middle dataTable">
+            <thead>
+                <tr>
+                    <th class="text-sm" style="width: 60px;">ID</th>
+                    <th class="text-sm" style="width: 200px;">Пользователь</th>
+                    <th class="text-sm" style="width: 200px;">Тариф</th>
+                    <th class="text-sm" style="width: 200px;">Сервер</th>
+                    <th class="text-sm" style="width: 120px;">Сумма</th>
+                    <th class="text-sm" style="width: 150px;">Дата</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                <tr>
+                    <td class="text-sm">{{ payment.id }}</td>
+                    <td class="text-sm">{{ payment.user_name }}</td>
+                    <td class="text-sm">{{ payment.tariff_name }}</td>
+                    <td class="text-sm server-cell" data-server="{{ payment.server_name }}">{{ payment.server_name }}</td>
+                    <td class="text-sm">{{ "%.2f"|format(payment.price) }} ₽</td>
+                    <td class="text-sm">{{ payment.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getCountryCode(serverName) {
+    // Проверяем, начинается ли имя сервера с эмодзи флага
+    const match = serverName.match(/^(?:\uD83C[\uDDE6-\uDDFF]){2}/);
+    if (!match) return null;
+
+    // Получаем Unicode символы флага
+    const flag = match[0];
+    // Преобразуем Unicode в буквенный код страны
+    const code = Array.from(flag)
+        .map(char => char.codePointAt(0))
+        .map(code => String.fromCharCode(code - 127397))
+        .join('')
+        .toLowerCase();
+    
+    return code;
+}
+
+function formatServerName(serverName) {
+    if (!serverName) return '-';
+    
+    const code = getCountryCode(serverName);
+    if (!code) return serverName;
+
+    // Получаем название страны (убираем эмодзи флага)
+    const name = serverName.replace(/^(?:\uD83C[\uDDE6-\uDDFF]){2}\s*/, '');
+    
+    return `<div class="d-flex align-items-center gap-2">
+              <img src="/static/flag/${code}.svg" alt="${code}" style="width: 16px; height: 16px;">
+              <span>${name}</span>
+            </div>`;
+}
+
+$(document).ready(function() {
+    // Инициализация DataTables
+    const table = $('#paymentsTable').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/ru.json'
+        },
+        order: [[0, 'desc']],
+        responsive: true,
+        autoWidth: false,
+        columnDefs: [
+            {
+                targets: 3, // Колонка с сервером
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return formatServerName(data);
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+});
+</script>
+{% endblock %}

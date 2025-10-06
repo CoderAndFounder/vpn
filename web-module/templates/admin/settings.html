@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Настройки{% endblock %}
+{% block title_header %}Настройки{% endblock %}
+
+{% block content %}
+<!-- Настройки ЮKassa -->
+<div>
+    <div class="py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Настройки ЮKassa</h6>
+            <button class="btn btn-primary" id="addYookassaBtn">
+                <i class="bi bi-plus-lg"></i> Добавить настройки
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table id="yookassaTable" class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-sm">ID</th>
+                    <th class="text-sm">Название</th>
+                    <th class="text-sm">Shop ID</th>
+                    <th class="text-sm">API Key</th>
+                    <th class="text-sm">Описание</th>
+                    <th class="text-sm">Статус</th>
+                    <th class="text-sm" style="width: 150px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for setting in yookassa_settings %}
+                <tr>
+                    <td class="text-sm">{{ setting.id }}</td>
+                    <td class="text-sm">{{ setting.name }}</td>
+                    <td class="text-sm">{{ setting.shop_id }}</td>
+                    <td class="text-sm">{{ setting.api_key[:6] }}***</td>
+                    <td class="text-sm">{{ setting.description or '' }}</td>
+                    <td>
+                        {% if setting.is_enable %}
+                        <span class="text-sm">Активен</span>
+                        {% else %}
+                        <span class="text-sm" style="color: rgb(235, 137, 137);">Неактивен</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-sm edit-yookassa-btn" style="color: white;" data-id="{{ setting.id }}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm delete-yookassa-btn" style="color: white;" data-id="{{ setting.id }}">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Настройки бота -->
+<div>
+    <h6 class="mb-4 text-lg font-semibold">Настройки Telegram бота</h6>
+    <div class="dataTables_wrapper">
+        <form id="botSettingsForm">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="botToken" class="form-label">Bot Token</label>
+                        <input type="text" class="form-control" id="botToken" name="bot_token" value="{{ bot_settings.bot_token if bot_settings else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="adminId" class="form-label">Admin ID</label>
+                        <input type="text" class="form-control" id="adminId" name="admin_id" value="{{ bot_settings.admin_id if bot_settings else '' }}" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="chatId" class="form-label">Chat ID</label>
+                        <input type="text" class="form-control" id="chatId" name="chat_id" value="{{ bot_settings.chat_id if bot_settings else '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="chanelId" class="form-label">Channel ID</label>
+                        <input type="text" class="form-control" id="chanelId" name="chanel_id" value="{{ bot_settings.chanel_id if bot_settings else '' }}">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_enable" {% if bot_settings and bot_settings.is_enable %}checked{% endif %}>
+                        <label class="form-check-label">Активен</label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ID для уведомлений о регистрации</label>
+                    <input type="text" class="form-control" name="reg_notify" value="{{ bot_settings.reg_notify if bot_settings else '' }}" placeholder="ID пользователя или чата">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">ID для уведомлений об оплате</label>
+                    <input type="text" class="form-control" name="pay_notify" value="{{ bot_settings.pay_notify if bot_settings else '' }}" placeholder="ID пользователя или чата">
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Сохранить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно ЮKassa -->
+<div class="modal fade" id="yookassaModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Настройки ЮKassa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="yookassaForm" class="needs-validation" novalidate>
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Shop ID</label>
+                        <input type="text" class="form-control" name="shop_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">API Key</label>
+                        <input type="text" class="form-control" name="api_key" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Описание</label>
+                        <textarea class="form-control" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_enable">
+                            <label class="form-check-label">Активен</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" id="saveYookassaBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Вы действительно хотите удалить эти настройки?</p>
+                <p class="mb-0"><strong>Название:</strong> <span id="deleteItemName"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="bi bi-trash"></i> Удалить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Инициализация DataTables
+    const yookassaTable = $('#yookassaTable').DataTable({
+        language: {
+            "processing": "Подождите...",
+            "search": "Поиск:",
+            "lengthMenu": "_MENU_ записей",
+            "info": "Записи с _START_ до _END_ из _TOTAL_",
+            "infoEmpty": "Записи с 0 до 0 из 0 записей",
+            "infoFiltered": "(отфильтровано из _MAX_ записей)",
+            "loadingRecords": "Загрузка записей...",
+            "zeroRecords": "Записи отсутствуют.",
+            "emptyTable": "В таблице отсутствуют данные",
+            "paginate": {
+                "first": "«",
+                "previous": "‹",
+                "next": "›",
+                "last": "»"
+            }
+        },
+        order: [[0, 'desc']],
+        pageLength: 10,
+        responsive: true,
+        autoWidth: false,
+        columnDefs: [
+            { orderable: false, targets: 6 }
+        ]
+    });
+
+    // Инициализация модальных окон
+    const yookassaModal = new bootstrap.Modal(document.getElementById('yookassaModal'));
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let currentYookassaId = null;
+    let isCreating = false;
+
+    // Обработчик добавления настроек ЮKassa
+    $('#addYookassaBtn').click(function() {
+        isCreating = true;
+        currentYookassaId = null;
+        $('#modalTitle').text('Добавление настроек ЮKassa');
+        $('#yookassaForm').trigger('reset').removeClass('was-validated');
+        yookassaModal.show();
+    });
+
+    // Обработчик редактирования настроек ЮKassa
+    $(document).on('click', '.edit-yookassa-btn', async function(e) {
+        e.preventDefault();
+        isCreating = false;
+        currentYookassaId = $(this).data('id');
+        $('#modalTitle').text('Редактирование настроек ЮKassa');
+        $('#yookassaForm').removeClass('was-validated');
+        
+        try {
+            const response = await fetch(`/admin/settings/yookassa/edit/${currentYookassaId}`);
+            if (!response.ok) throw new Error('Ошибка при получении данных');
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            
+            const form = $('#yookassaForm')[0];
+            form.name.value = data.name;
+            form.shop_id.value = data.shop_id;
+            form.api_key.value = data.api_key;
+            form.description.value = data.description || '';
+            form.is_enable.checked = data.is_enable;
+            
+            yookassaModal.show();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при получении данных: ' + error.message);
+        }
+    });
+
+    // Обработчик удаления настроек ЮKassa
+    $(document).on('click', '.delete-yookassa-btn', function(e) {
+        e.preventDefault();
+        currentYookassaId = $(this).data('id');
+        const name = $(this).closest('tr').find('td:eq(1)').text();
+        $('#deleteItemName').text(name);
+        deleteModal.show();
+    });
+
+    // Подтверждение удаления
+    $('#confirmDeleteBtn').click(async function() {
+        try {
+            const response = await fetch(`/admin/settings/yookassa/delete/${currentYookassaId}`, {
+                method: 'POST'
+            });
+            if (!response.ok) throw new Error('Ошибка при удалении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            deleteModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при удалении: ' + error.message);
+        }
+    });
+
+    // Сохранение настроек ЮKassa
+    $('#saveYookassaBtn').click(async function() {
+        const form = document.getElementById('yookassaForm');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        const formData = {
+            name: form.name.value,
+            shop_id: form.shop_id.value,
+            api_key: form.api_key.value,
+            description: form.description.value,
+            is_enable: form.is_enable.checked
+        };
+
+        try {
+            const url = isCreating ? '/admin/settings/yookassa/create' 
+                                 : `/admin/settings/yookassa/edit/${currentYookassaId}`;
+            const response = await fetch(url, {
+                method: isCreating ? 'POST' : 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error('Ошибка при сохранении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            yookassaModal.hide();
+            window.location.reload();
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при сохранении: ' + error.message);
+        }
+    });
+
+    // Сохранение настроек бота
+    $('#botSettingsForm').submit(async function(e) {
+        e.preventDefault();
+        const formData = {
+            bot_token: this.bot_token.value,
+            admin_id: this.admin_id.value,
+            chat_id: this.chat_id.value,
+            chanel_id: this.chanel_id.value,
+            is_enable: this.is_enable.checked,
+            reg_notify: this.reg_notify.value,
+            pay_notify: this.pay_notify.value
+        };
+
+        try {
+            const response = await fetch('/admin/settings/bot/edit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) throw new Error('Ошибка при сохранении');
+            
+            const result = await response.json();
+            if (result.error) throw new Error(result.error);
+            
+            alert('Настройки бота успешно сохранены');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при сохранении: ' + error.message);
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Сервера{% endblock %}
+{% block title_header %}Сервера{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="text-lg font-semibold">Управление серверами</h6>
+        <button class="btn btn-primary" onclick="showCreateServerModal()">
+            <i class="bi bi-plus-lg me-2"></i>Добавить сервер
+        </button>
+    </div>
+    <div class="dataTables_wrapper">
+        <table id="serversTable" class="table table-hover align-middle dataTable">
+            <thead>
+                <tr>
+                    <th class="text-sm" style="width: 60px;">ID</th>
+                    <th class="text-sm" style="width: 200px;">Название</th>
+                    <th class="text-sm" style="width: 150px;">IP</th>
+                    <th class="text-sm" style="width: 200px;">URL</th>
+                    <th class="text-sm" style="width: 100px;">Порт</th>
+                    <th class="text-sm" style="width: 100px;">Inbound ID</th>
+                    <th class="text-sm" style="width: 100px;">Статус</th>
+                    <th class="text-sm" style="width: 120px;">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for server in servers %}
+                <tr>
+                    <td class="text-sm">{{ server.id }}</td>
+                    <td class="text-sm">{{ server.name }}</td>
+                    <td class="text-sm">{{ server.ip or '-' }}</td>
+                    <td class="text-sm">{{ server.url }}</td>
+                    <td class="text-sm">{{ server.port }}</td>
+                    <td class="text-sm">{{ server.inbound_id }}</td>
+                    <td>
+                        {% if server.is_enable %}
+                        <span class="text-sm">Активен</span>
+                        {% else %}
+                        <span class="text-sm" style="color: rgb(235, 137, 137);">Отключен</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm" style="color: white;" onclick="editServer({{ server.id }})">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm" style="color: white;" onclick="deleteServer({{ server.id }})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Модальное окно для создания/редактирования сервера -->
+<div class="modal fade" id="serverModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content bg-dark">
+            <div class="modal-header border-bottom border-gray-700">
+                <h5 class="modal-title" id="serverModalLabel">Добавить сервер</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="serverForm">
+                    <input type="hidden" id="serverId">
+                    <div class="mb-3">
+                        <label for="serverName" class="form-label">Название сервера</label>
+                        <input type="text" class="form-control bg-dark text-white" id="serverName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="serverIp" class="form-label">IP адрес</label>
+                        <input type="text" class="form-control bg-dark text-white" id="serverIp">
+                    </div>
+                    <div class="mb-3">
+                        <label for="serverUrl" class="form-label">URL</label>
+                        <input type="text" class="form-control bg-dark text-white" id="serverUrl" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="serverPort" class="form-label">Порт</label>
+                        <input type="text" class="form-control bg-dark text-white" id="serverPort" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="secretPath" class="form-label">Secret Path</label>
+                        <input type="text" class="form-control bg-dark text-white" id="secretPath" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя</label>
+                        <input type="text" class="form-control bg-dark text-white" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль</label>
+                        <input type="password" class="form-control bg-dark text-white" id="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="secretKey" class="form-label">Secret Key</label>
+                        <input type="text" class="form-control bg-dark text-white" id="secretKey">
+                    </div>
+                    <div class="mb-3">
+                        <label for="inboundId" class="form-label">Inbound ID</label>
+                        <input type="number" class="form-control bg-dark text-white" id="inboundId" value="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="inboundIdPromo" class="form-label">Inbound ID Promo</label>
+                        <input type="number" class="form-control bg-dark text-white" id="inboundIdPromo" value="2" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="isEnable" checked>
+                            <label class="form-check-label" for="isEnable">Активен</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-top border-gray-700">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="btn btn-primary" onclick="saveServer()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно статистики -->
+<div class="modal fade" id="serverStatsModal" tabindex="-1" aria-labelledby="serverStatsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="serverStatsModalLabel">Статистика сервера</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-light">Всего подписок</h6>
+                                <h4 class="card-title text-white" id="totalSubscriptions">-</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-light">Всего пользователей</h6>
+                                <h4 class="card-title text-white" id="totalUsers">-</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-dark text-white">
+                            <div class="card-body">
+                                <h6 class="card-subtitle mb-2 text-light">Общая выручка</h6>
+                                <h4 class="card-title text-white" id="totalRevenue">-</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h5 class="mb-3">Тарифные планы</h5>
+                <div class="table-responsive">
+                    <table class="table" id="tariffStatsTable">
+                        <thead>
+                            <tr>
+                                <th class="text-sm">Название</th>
+                                <th class="text-sm">Описание</th>
+                                <th class="text-sm">Цена</th>
+                                <th class="text-sm">Дней</th>
+                                <th class="text-sm">Подписок</th>
+                                <th class="text-sm">Выручка</th>
+                                <th class="text-sm">Статус</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function getCountryCode(serverName) {
+    const match = serverName.match(/^(?:\uD83C[\uDDE6-\uDDFF]){2}/);
+    if (!match) return null;
+
+    const flag = match[0];
+    const code = Array.from(flag)
+        .map(char => char.codePointAt(0))
+        .map(code => String.fromCharCode(code - 127397))
+        .join('')
+        .toLowerCase();
+    
+    return code;
+}
+
+function formatServerName(serverName) {
+    if (!serverName) return '-';
+    
+    const code = getCountryCode(serverName);
+    if (!code) return serverName;
+
+    const name = serverName.replace(/^(?:\uD83C[\uDDE6-\uDDFF]){2}\s*/, '');
+    
+    return `<div class="d-flex align-items-center gap-2">
+              <img src="/static/flag/${code}.svg" alt="${code}" style="width: 16px; height: 16px;">
+              <span>${name}</span>
+            </div>`;
+}
+
+let serverModal;
+let serverStatsModal;
+
+$(document).ready(function() {
+    serverModal = new bootstrap.Modal(document.getElementById('serverModal'));
+    serverStatsModal = new bootstrap.Modal(document.getElementById('serverStatsModal'));
+    
+    const table = $('#serversTable').DataTable({
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/ru.json'
+        },
+        order: [[0, 'desc']],
+        responsive: true,
+        autoWidth: false,
+        columnDefs: [
+            {
+                targets: 1,
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        const serverId = row[0];
+                        const formattedName = formatServerName(data);
+                        return `<a href="#" class="server-name-link" data-server-id="${serverId}">${formattedName}</a>`;
+                    }
+                    return data;
+                }
+            }
+        ]
+    });
+
+    // Добавляем обработчик клика на имя сервера
+    $('#serversTable').on('click', '.server-name-link', async function(e) {
+        e.preventDefault();
+        const serverId = $(this).data('server-id');
+        await showServerStats(serverId);
+    });
+});
+
+async function showServerStats(id) {
+    try {
+        const response = await fetch(`/admin/servers/api/servers/${id}/stats`);
+        if (!response.ok) throw new Error('Ошибка получения статистики сервера');
+        
+        const data = await response.json();
+        
+        // Обновляем общую статистику
+        document.getElementById('totalSubscriptions').textContent = data.stats.total_subscriptions;
+        document.getElementById('totalUsers').textContent = data.stats.total_users;
+        document.getElementById('totalRevenue').textContent = new Intl.NumberFormat('ru-RU', {
+            style: 'currency',
+            currency: 'RUB'
+        }).format(data.stats.total_revenue);
+        
+        // Обновляем таблицу тарифов
+        const tbody = document.querySelector('#tariffStatsTable tbody');
+        tbody.innerHTML = '';
+        
+        data.tariffs.forEach(tariff => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="text-sm">${tariff.name}</td>
+                <td class="text-sm">${tariff.description || '-'}</td>
+                <td class="text-sm">${new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB'
+                }).format(tariff.price)}</td>
+                <td class="text-sm">${tariff.left_day}</td>
+                <td class="text-sm">${tariff.subscriptions_count}</td>
+                <td class="text-sm">${new Intl.NumberFormat('ru-RU', {
+                    style: 'currency',
+                    currency: 'RUB'
+                }).format(tariff.total_revenue)}</td>
+                <td class="text-sm">${tariff.is_enable ? 
+                    '<span class="text-sm">Активен</span>' : 
+                    '<span class="text-sm" style="color: rgb(235, 137, 137);">Отключен</span>'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+        
+        serverStatsModal.show();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при получении статистики сервера');
+    }
+}
+
+function showCreateServerModal() {
+    document.getElementById('serverModalLabel').textContent = 'Добавить сервер';
+    document.getElementById('serverForm').reset();
+    document.getElementById('serverId').value = '';
+    serverModal.show();
+}
+
+async function editServer(id) {
+    try {
+        const response = await fetch(`/admin/servers/api/servers/${id}`);
+        if (!response.ok) throw new Error('Ошибка получения данных сервера');
+        
+        const server = await response.json();
+        document.getElementById('serverModalLabel').textContent = 'Редактировать сервер';
+        document.getElementById('serverId').value = server.id;
+        document.getElementById('serverName').value = server.name;
+        document.getElementById('serverIp').value = server.ip || '';
+        document.getElementById('serverUrl').value = server.url;
+        document.getElementById('serverPort').value = server.port;
+        document.getElementById('secretPath').value = server.secret_path;
+        document.getElementById('username').value = server.username;
+        document.getElementById('password').value = server.password;
+        document.getElementById('secretKey').value = server.secretkey || '';
+        document.getElementById('inboundId').value = server.inbound_id;
+        document.getElementById('inboundIdPromo').value = server.inbound_id_promo;
+        document.getElementById('isEnable').checked = server.is_enable;
+        
+        serverModal.show();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при получении данных сервера');
+    }
+}
+
+async function saveServer() {
+    try {
+        const serverId = document.getElementById('serverId').value;
+        const data = {
+            name: document.getElementById('serverName').value,
+            ip: document.getElementById('serverIp').value,
+            url: document.getElementById('serverUrl').value,
+            port: document.getElementById('serverPort').value,
+            secret_path: document.getElementById('secretPath').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            secretkey: document.getElementById('secretKey').value,
+            inbound_id: parseInt(document.getElementById('inboundId').value),
+            inbound_id_promo: parseInt(document.getElementById('inboundIdPromo').value),
+            is_enable: document.getElementById('isEnable').checked
+        };
+
+        const url = serverId ? `/admin/servers/api/servers/${serverId}` : '/admin/servers/api/servers';
+        const method = serverId ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error('Ошибка сохранения сервера');
+
+        serverModal.hide();
+        window.location.reload();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при сохранении сервера');
+    }
+}
+
+async function deleteServer(id) {
+    if (!confirm('Вы уверены, что хотите удалить этот сервер?')) return;
+
+    try {
+        const response = await fetch(`/admin/servers/api/servers/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) throw new Error('Ошибка удаления сервера');
+
+        window.location.reload();
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка при удалении сервера');
+    }
+}
+</script>
+{% endblock %}

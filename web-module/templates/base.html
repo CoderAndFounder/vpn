@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %} - Панель управления</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css">
+    <script type="text/javascript" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    
+    {% block styles %}{% endblock %}
+</head>
+<body class="min-h-screen">
+    <!-- Sidebar -->
+    <div class="flex">
+        <aside class="fixed inset-y-0 left-0 bg-gray-900 w-64 hidden md:flex flex-col">
+            <div class="flex items-center justify-center h-16 bg-gray-800">
+                <span class="text-white text-lg font-semibold">Панель управления</span>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4">
+                <ul class="space-y-2 px-3">
+                    <li>
+                        <a href="{{ url_for('admin.admin_dashboard') }}" 
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'admin.admin_dashboard' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-speedometer2 mr-3"></i>
+                            <span>Дашборд</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('users.users_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'users.users_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-people mr-3"></i>
+                            <span>Пользователи</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('tariffs.tariffs_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'tariffs.tariffs_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-tags mr-3"></i>
+                            <span>Тарифы</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('trial_settings.trial_settings_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'trial_settings.trial_settings_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-hourglass-split mr-3"></i>
+                            <span>Пробные тарифы</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('payments.payments_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'payments.payments_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-credit-card mr-3"></i>
+                            <span>Платежи</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('messages.messages_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'messages.messages_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-chat-dots mr-3"></i>
+                            <span>Сообщения</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('servers.servers_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'servers.servers_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-hdd-rack mr-3"></i>
+                            <span>Сервера</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('promocodes.promocodes_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'promocodes.promocodes_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-gift mr-3"></i>
+                            <span>Промокоды</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings.settings_list') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'settings.settings_list' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-gear mr-3"></i>
+                            <span>Настройки</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('logout') }}"
+                           class="flex items-center p-3 text-gray-300 hover:bg-gray-800 rounded-lg {% if request.endpoint == 'logout' %}bg-gray-800{% endif %}">
+                            <i class="bi bi-box-arrow-left mr-3"></i>
+                            <span>Выйти</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Mobile menu button -->
+        <div class="md:hidden fixed top-0 left-0 z-50 p-4">
+            <button type="button" class="text-gray-300 hover:text-white" id="mobile-menu-button">
+                <i class="bi bi-list text-2xl"></i>
+            </button>
+        </div>
+
+        <!-- Main content -->
+        <main class="flex-1 md:ml-64 p-6">
+            {% if error %}
+            <div class="bg-red-800 text-red-200 p-4 rounded-lg mb-6">
+                {{ error }}
+            </div>
+            {% endif %}
+            
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Mobile menu -->
+    <div class="fixed inset-0 bg-gray-900 bg-opacity-50 z-40 hidden" id="mobile-menu-overlay">
+        <div class="fixed inset-y-0 left-0 w-64 bg-gray-900 transform -translate-x-full transition-transform duration-300" id="mobile-menu">
+            <div class="flex items-center justify-between h-16 bg-gray-800 px-4">
+                <span class="text-white text-lg font-semibold">Панель управления</span>
+                <button type="button" class="text-gray-300 hover:text-white" id="mobile-menu-close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal Template -->
+    <div class="modal" id="modalTemplate">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="modal-close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg modal-close">
+                    Закрыть
+                </button>
+                <button type="button" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg modal-save">
+                    Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Modal functionality
+        function showModal(title, content, onSave = null) {
+            const modal = document.getElementById('modalTemplate');
+            const modalTitle = modal.querySelector('.modal-title');
+            const modalBody = modal.querySelector('.modal-body');
+            const modalSave = modal.querySelector('.modal-save');
+            
+            modalTitle.textContent = title;
+            modalBody.innerHTML = content;
+            
+            if (onSave) {
+                modalSave.style.display = 'block';
+                modalSave.onclick = onSave;
+            } else {
+                modalSave.style.display = 'none';
+            }
+            
+            modal.classList.add('show');
+            
+            const closeButtons = modal.querySelectorAll('.modal-close');
+            closeButtons.forEach(button => {
+                button.onclick = () => {
+                    modal.classList.remove('show');
+                };
+            });
+            
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            };
+        }
+        
+        // Mobile menu functionality
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+        const mobileMenuClose = document.getElementById('mobile-menu-close');
+
+        function openMobileMenu() {
+            mobileMenuOverlay.classList.remove('hidden');
+            setTimeout(() => {
+                mobileMenu.classList.remove('-translate-x-full');
+            }, 10);
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.add('-translate-x-full');
+            setTimeout(() => {
+                mobileMenuOverlay.classList.add('hidden');
+            }, 300);
+        }
+
+        mobileMenuButton.addEventListener('click', openMobileMenu);
+        mobileMenuClose.addEventListener('click', closeMobileMenu);
+        mobileMenuOverlay.addEventListener('click', (e) => {
+            if (e.target === mobileMenuOverlay) {
+                closeMobileMenu();
+            }
+        });
+        
+        // DataTables default configuration
+        $.extend($.fn.dataTable.defaults, {
+            language: {
+                url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/ru.json'
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
